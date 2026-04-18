@@ -47,12 +47,12 @@ optimizer = torch.optim.Adam(model.parameters(), lr=lr_initial)
 # Reduce LR by 0.5 if loss doesn't improve for 5 epochs
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer,
-    mode      = "min",
-    factor    = 0.5,
-    patience  = 5,
-    min_lr    = MIN_LR,
-    verbose   = True,
+    mode     = "min",
+    factor   = 0.5,
+    patience = 5,
+    min_lr   = MIN_LR,
 )
+_last_lr_reported = lr_initial  # used below to print LR changes manually
 
 
 # ─── Training loop ────────────────────────────────────────────────────────────
@@ -85,8 +85,12 @@ while True:
 
     print(f"Epoch {epoch:4d} | Loss: {avg_loss:.6f} | LR: {current_lr:.2e}")
 
-    # Step scheduler
+    # Step scheduler + print if LR changed
     scheduler.step(avg_loss)
+    current_lr = optimizer.param_groups[0]["lr"]
+    if current_lr < _last_lr_reported:
+        print(f"           ↳ LR reduced to {current_lr:.2e}")
+        _last_lr_reported = current_lr
 
     # Save best checkpoint
     if avg_loss < best_loss:
